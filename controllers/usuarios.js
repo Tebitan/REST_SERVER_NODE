@@ -1,40 +1,69 @@
 const { request, response } = require('express');
+const Usuario = require('../models/usuario');
+const bcryptjs = require('bcryptjs');
 
+const usuariosGet = async(req = request, res = response) => {
+    const { limite = 5, desde = 0 } = req.query;
+    const query = { state: true };
+    //  2 promesas
+    /* const usuarios = await Usuario.find(query)
+         .skip(Number(desde))
+         .limit(Number(limite));
 
-const usuariosGet = (req = request, res = response) => {
+     const total = await Usuario.countDocuments(query);*/
 
-    //obtenemos los parametros en la URL ?a=1&b=2
-    const query = req.query;
+    //agrupamos los 2 promesas , para que se ejecuten simultaneamente mas eficiente
+    //Desectruturamos por posicion  0 -> total y 1 -> Usuarios
+    const [total, usuarios] = await Promise.all([
+        Usuario.countDocuments(query),
+        Usuario.find(query)
+        .skip(Number(desde))
+        .limit(Number(limite))
+    ]);
 
-    res.json({
-        msg: 'get API ',
-        query
-    });
+    res.json({ total, usuarios });
 }
 
-const usuariosPost = (req = request, res = response) => {
+const usuariosPost = async(req = request, res = response) => {
 
-    const body = req.body;
+    const { name, email, password, role } = req.body;
+    const usuario = new Usuario({ name, email, password, role });
 
-    res.json({
-        msg: 'get Post ',
-        body
-    });
+    //Encriptar la contraseña 
+    const salt = bcryptjs.genSaltSync();
+    usuario.password = bcryptjs.hashSync(password, salt);
+
+    //Guardar en BD
+    await usuario.save();
+
+    res.json(usuario);
 }
 
-const usuariosPut = (req = request, res = response) => {
-    const paramId = req.params.id;
+const usuariosPut = async(req = request, res = response) => {
+    const id = req.params.id;
+    //resto = es el objeto que yo voy a modificar execto  (_id,password, google, email)
+    const { _id, password, google, email, ...resto } = req.body;
 
-    res.json({
-        msg: 'get Put',
-        paramId
-    });
+    // TODO validar contra base de datos 
+
+    if (password) {
+        //Encriptar la contraseña 
+        const salt = bcryptjs.genSaltSync();
+        resto.password = bcryptjs.hashSync(password, salt);
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto);
+
+    res.json(usuario);
 }
 
-const usuariosDelete = (req = request, res = response) => {
-    res.json({
-        msg: 'get Delete'
-    });
+const usuariosDelete = async(req = request, res = response) => {
+    const id = req.params.id;
+
+    //fisicamente lo borramos 
+    /*const usuario =  await Usuario.findByIdAndDelete(id); */
+    const usuario = await Usuario.findByIdAndUpdate(id, { state: false });
+    res.json(usuario);
 }
 
 module.exports = {

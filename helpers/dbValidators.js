@@ -1,3 +1,6 @@
+const { request } = require('express');
+const { Producto } = require('../models');
+const Categoria = require('../models/categoria');
 const Role = require('../models/role');
 const Usuario = require('../models/usuario');
 
@@ -22,8 +25,43 @@ const userExistForID = async(id = '') => {
     }
 };
 
+const existeCategoriaForID = async(id = '') => {
+    const categoria = await Categoria.findById(id);
+    if (!categoria) {
+        throw new Error(`La categoria con ID ${ id } No existe`)
+    }
+};
+
+const existeCategoriaForName = async(name = '') => {
+    name = name.toUpperCase();
+    const categoria = await Categoria.findOne({ name });
+    if (categoria) {
+        throw new Error(`La categoria ${ categoria.name } ya existe`)
+    }
+};
+
+const existeProductoForID = async(id = '') => {
+    const producto = await Producto.findById(id);
+    if (!producto) {
+        throw new Error(`El producto con ID ${ id } No existe`)
+    }
+};
+
+const existeProductoForName = async(name = '') => {
+    name = name.toUpperCase();
+    const producto = await Producto.findOne({ name });
+    if (producto) {
+        throw new Error(`El producto ${ producto.name } ya existe`)
+    }
+};
+
+
 module.exports = {
     isValidRole,
     emailExist,
-    userExistForID
+    userExistForID,
+    existeCategoriaForID,
+    existeCategoriaForName,
+    existeProductoForID,
+    existeProductoForName
 }

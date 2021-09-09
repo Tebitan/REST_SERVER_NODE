@@ -55,6 +55,37 @@ const existeProductoForName = async(name = '') => {
     }
 };
 
+const coleccionesPermitidas = (coleccion = '', coleccionesPermitidas = []) => {
+    if (!coleccionesPermitidas.includes(coleccion)) {
+        throw new Error(`La coleccion ${ coleccion } No existe - ${coleccionesPermitidas} `)
+    }
+    return true;
+};
+
+const getModelByIDColeccion = async(id = '', coleccion = '') => {
+    try {
+        let modelo;
+        switch (coleccion.toLowerCase()) {
+            case 'usuarios':
+                modelo = await Usuario.findById(id);
+                break;
+            case 'productos':
+                modelo = await Producto.findById(id);
+                break;
+            default:
+                throw new Error(`Se me olvido validar esto`)
+        }
+        if (!modelo) {
+            throw new Error(`No existe ${coleccion} con este ID : ${id} `)
+        }
+        return modelo;
+
+    } catch (error) {
+        throw new Error(`No existe ${coleccion} con este ID : ${id} `)
+    }
+
+
+};
 
 module.exports = {
     isValidRole,
@@ -63,5 +94,7 @@ module.exports = {
     existeCategoriaForID,
     existeCategoriaForName,
     existeProductoForID,
-    existeProductoForName
+    existeProductoForName,
+    coleccionesPermitidas,
+    getModelByIDColeccion
 }
